@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Playwright | End-to-End Testing</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-deep: #080a0f;
+      --bg-card: #11141d;
+      --bg-code: #010409;
+      --bg-input: #0d0f17;
+      --accent: #00ff9d;
+      --accent-glow: rgba(0, 255, 157, 0.15);
+      --accent-soft: rgba(0, 255, 157, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #8b949e;
+      --border: #21262d;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      --sidebar-width: 260px;
+      
+      --badge-a11y: #1f6feb;     /* Blue */
+      --badge-text: #8957e5;     /* Purple */
+      --badge-form: #d29922;     /* Orange */
+      --badge-media: #da3633;    /* Pink/Redish */
+      --badge-attr: #d2a8ff;     /* Light Purple/Yellowish */
+      --badge-test: #f85149;     /* Red */
+      --badge-yellow: #e3b341;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-deep);
+      background-image: radial-gradient(circle at 50% 50%, #161b22 0%, #080a0f 100%);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: flex;
+    }
+
+    h1, h2, h3, h4, h5, h6, .brand, code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background-color: var(--bg-dark);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      scrollbar-width: none; /* Hide scrollbar for Firefox */
+      -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+    }
+    .sidebar::-webkit-scrollbar {
+      display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 255, 157, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
+    }
+
+    .brand-accent { color: var(--accent); }
+    .tagline { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 20px; }
+
+    .channel-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn-link {
+      display: block;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-link:hover {
+      background-color: var(--accent);
+      color: var(--bg-dark);
+    }
+
+    /* Accordion Nav */
+    .nav-accordion details { margin-bottom: 0.5rem; }
+    .nav-accordion summary {
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      list-style: none;
+      color: var(--text-main);
+      user-select: none;
+      border-radius: 4px;
+    }
+    .nav-accordion summary::-webkit-details-marker { display: none; }
+    .nav-accordion summary:hover { background: rgba(255,255,255,0.05); }
+    .nav-accordion ul {
+      list-style: none;
+      padding-left: 1rem;
+      margin-top: 0.5rem;
+    }
+    .nav-accordion a {
+      display: block;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.5rem;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .nav-accordion a:hover, .nav-accordion a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Progress Tracker */
+    .progress-wrapper {
+      margin-top: auto;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .progress-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .progress-bar-bg {
+      background: var(--border);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 0;
+      min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .mobile-header {
+      display: none;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-dark);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    .hamburger {
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 6rem 0 4rem;
+      text-align: left;
+    }
+    .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; line-height: 1.2; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem; max-width: 700px; }
+    
+    .hero-actions { display: flex; gap: 1rem; margin-bottom: 3rem; }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-dark);
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      transition: transform 0.2s;
+    }
+    .btn-primary:hover { transform: scale(1.05); }
+
+    .typing-wrapper {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      color: var(--accent);
+      background: var(--bg-card);
+      display: inline-block;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+    }
+    .typing-text::after {
+      content: '|';
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Animations */
+    section, .topic-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    section.visible, .topic-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Sections Layout */
+    section {
+      padding-top: 4rem;
+      margin-bottom: 4rem;
+    }
+    
+    h2.section-title {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3.subsection-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge.a11y { background: var(--badge-a11y); color: white; }
+    .badge.text { background: var(--badge-text); color: white; }
+    .badge.form { background: var(--badge-form); color: white; }
+    .badge.media { background: var(--badge-media); color: white; }
+    .badge.attr { background: var(--badge-yellow); color: #000; }
+    .badge.test { background: var(--badge-test); color: white; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      transition: box-shadow 0.3s;
+    }
+    .card:hover {
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    ul.takeaways {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+    ul.takeaways li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+    }
+    ul.takeaways li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    /* Video Card */
+    .video-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: row; /* Change to row for smaller side-by-side look */
+      max-width: 600px;    /* Constrain overall width */
+    }
+    .video-thumbnail {
+      position: relative;
+      width: 650px;        /* Slightly larger default */
+      max-width: 50%;     /* Don't let it take too much space on small cards */
+      flex-shrink: 0;
+      background: #000;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-thumbnail::before {
+      content: "";
+      display: block;
+      padding-top: 56.25%; /* 16:9 Ratio */
+    }
+    .video-thumbnail img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: contain; /* Show the full image without cropping */
+    }
+    .play-button {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      transition: background 0.3s, color 0.3s;
+      z-index: 2;
+    }
+    .video-thumbnail:hover .play-button {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+    .video-thumbnail iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+      z-index: 3;
+    }
+    .video-info { padding: 1.5rem; }
+    .video-info h4 { margin-bottom: 0.5rem; }
+    .video-info a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+
+    /* Code Blocks */
+    .code-wrapper {
+      position: relative;
+      margin: 1.5rem 0;
+    }
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      color: #e6edf3;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      transition: 0.2s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+
+    /* Live Demos */
+    .demo-panel {
+      background: #010409;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+    }
+    .demo-header {
+      background: var(--bg-card);
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-body {
+      padding: 2rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    .demo-controls {
+      padding: 1rem;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .demo-btn {
+      background: var(--border);
+      color: white;
+      border: 1px solid transparent;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      transition: 0.2s;
+    }
+    .demo-btn:hover { border-color: var(--accent); }
+
+    /* Demo Elements Highlighting */
+    .demo-el {
+      transition: all 0.3s;
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .demo-el.highlighted {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .demo-tooltip {
+      position: absolute;
+      top: -25px;
+      left: 0;
+      background: var(--accent);
+      color: #000;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    .demo-el.highlighted .demo-tooltip { opacity: 1; }
+
+    /* Demo Specific Styles */
+    .demo-form-group { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: 300px;}
+    .demo-form-group label { font-size: 0.9rem; font-weight: 500; }
+    .demo-form-group input, .demo-search-bar {
+      padding: 0.5rem;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 4px;
+    }
+    .demo-product-card {
+      border: 1px solid var(--border);
+      padding: 1rem;
+      border-radius: 8px;
+      background: var(--bg-dark);
+      width: 200px;
+    }
+
+    .pro-tip {
+      background: rgba(0, 255, 157, 0.05);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+    }
+    .pro-tip strong { color: var(--accent); display: block; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.85rem;}
+
+    /* Tables & Grids */
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; background: var(--bg-card); border-radius: 8px; overflow: hidden;}
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: rgba(255,255,255,0.05); font-weight: 600; color: var(--accent); }
+    
+    .priority-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 1.5rem 0; }
+    .priority-item {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);
+    }
+    .priority-item span.num { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: bold; font-size: 1.2rem; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+      .main-content { margin-left: 0; }
+      .mobile-header { display: flex; align-items: center; justify-content: space-between; }
+      .hero h1 { font-size: 2.5rem; }
+      .video-card { flex-direction: column; max-width: 100%; }
+      .video-thumbnail { width: 100%; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <a href="#" class="brand"><div class="dot"></div>Playwright<span class="brand-accent">Mastery</span></a>
+    <div class="tagline">Learn end-to-end testing</div>
+
+    <div class="channel-links">
+      <a href="https://youtube.com/@automationtestcrew?si=os4BoaGPhoROAiRN" target="_blank" rel="noopener" class="btn-link">🎬 YouTube Channel</a>
+      <a href="https://youtube.com/playlist?list=PL4b-ZB0-nI8cxINEXQGJz0ilAiYYgJZH6&si=h4TSRlSZka0fFZwz" target="_blank" rel="noopener" class="btn-link">📋 Full Playlist</a>
+    </div>
+
+    <nav class="nav-accordion">
+      <details name="nav-accordion" open>
+        <summary>1. Intro & Installation</summary>
+        <ul>
+          <li><a href="#selenium-vs-playwright" class="nav-link" data-id="selenium-vs-playwright">Selenium vs Playwright</a></li>
+          <li><a href="#playwright-architecture" class="nav-link" data-id="playwright-architecture">Playwright Architecture</a></li>
+          <li><a href="#installation" class="nav-link" data-id="installation">Installation</a></li>
+          <li><a href="#folder-structure" class="nav-link" data-id="folder-structure">Folder Structure</a></li>
+        </ul>
+      </details>
+      <details name="nav-accordion">
+        <summary>2. Basics</summary>
+        <ul>
+          <li><a href="#first-script" class="nav-link" data-id="first-script">First Script</a></li>
+          <li><a href="#browser-actions" class="nav-link" data-id="browser-actions">Browser Actions</a></li>
+          <li><a href="#basic-assertions" class="nav-link" data-id="basic-assertions">Basic Assertions</a></li>
+        </ul>
+      </details>
+      <details name="nav-accordion">
+        <summary>3. Locators</summary>
+        <ul>
+          <li><a href="#getByRole" class="nav-link" data-id="getByRole">getByRole</a></li>
+          <li><a href="#getByText" class="nav-link" data-id="getByText">getByText</a></li>
+          <li><a href="#getByLabel" class="nav-link" data-id="getByLabel">getByLabel</a></li>
+          <li><a href="#getByPlaceholder" class="nav-link" data-id="getByPlaceholder">getByPlaceholder</a></li>
+          <li><a href="#getByAltText" class="nav-link" data-id="getByAltText">getByAltText</a></li>
+          <li><a href="#getByTitle" class="nav-link" data-id="getByTitle">getByTitle</a></li>
+          <li><a href="#getByTestId" class="nav-link" data-id="getByTestId">getByTestId</a></li>
+        </ul>
+      </details>
+      <details name="nav-accordion">
+        <summary>Reference</summary>
+        <ul>
+          <li><a href="#priority" class="nav-link" data-id="priority">Locator Priority</a></li>
+          <li><a href="#reference" class="nav-link" data-id="reference">Quick Reference</a></li>
+          <li><a href="#resources" class="nav-link" data-id="resources">Resources</a></li>
+        </ul>
+      </details>
+    </nav>
+
+    <div class="progress-wrapper">
+      <div class="progress-text">
+        <span>Progress</span>
+        <span id="progress-count">0 / 14 topics</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="mobile-header">
+      <div class="brand"><div class="dot"></div>Playwright</div>
+      <button class="hamburger" id="hamburger">☰</button>
+    </div>
+
+    <div class="container">
+      
+      <!-- Hero -->
+      <header class="hero">
+        <h1>Master Playwright<br><span>End-to-End Testing</span></h1>
+        <p>From zero to automation expert — with video tutorials, code examples, and interactive demos.</p>
+        <div class="hero-actions">
+          <a href="#selenium-vs-playwright" class="btn-primary">Start Learning →</a>
+          <a href="https://youtube.com/playlist?list=PL4b-ZB0-nI8cxINEXQGJz0ilAiYYgJZH6&si=h4TSRlSZka0fFZwz" target="_blank" rel="noopener" class="btn-link" style="border: 1px solid var(--text-muted); color: var(--text-main);">View Playlist ↗</a>
+        </div>
+        <div class="typing-wrapper">
+          <span class="typing-text" id="typing-text"></span>
+        </div>
+      </header>
+
+      <!-- SECTION 1: INTRO & INSTALLATION -->
+      <section id="section-1" class="visible" style="opacity: 1; transform: translateY(0);">
+        <h2 class="section-title">1. Intro & Installation</h2>
+
+        <div id="selenium-vs-playwright" class="topic-section visible" style="opacity: 1; transform: translateY(0);">
+          <h3 class="subsection-title">1.1 Selenium vs Playwright</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="X5WTDcGIoOs">
+              <img src="https://img.youtube.com/vi/X5WTDcGIoOs/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Selenium vs Playwright - The Ultimate Comparison</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Understand why Playwright is the modern alternative to Selenium. Compare architecture, speed, reliability, and developer experience.</p>
+              <a href="https://youtu.be/X5WTDcGIoOs?si=9rEM1T970F6vHRsO" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 1rem; border-left: 4px solid var(--badge-a11y);">
+            <h4 style="margin-bottom: 1rem; color: var(--accent);">Deep Dive: Why Playwright Wins</h4>
+            <ul class="takeaways">
+              <li><strong>Architecture:</strong> Selenium uses the WebDriver API (JSON Wire Protocol) which acts as a middleman. Playwright communicates directly with browsers using the <strong>Chrome DevTools Protocol (CDP)</strong> and socket connections, making it significantly faster and more reliable.</li>
+              <li><strong>Auto-waiting:</strong> Playwright performs a range of actionability checks (visibility, stability, enabled) before performing actions. No more <code>Thread.sleep()</code> or complex explicit waits!</li>
+              <li><strong>Execution Speed:</strong> Due to its modern architecture, Playwright can run tests up to 3x faster than Selenium.</li>
+              <li><strong>Tooling:</strong> Playwright comes with the <strong>Trace Viewer</strong> (for time-travel debugging), <strong>Codegen</strong> (to record tests), and <strong>Inspector</strong> out of the box.</li>
+              <li><strong>Context Isolation:</strong> Playwright uses BrowserContexts to provide complete isolation between tests with zero overhead—it's like opening an Incognito window for every test.</li>
+              <li><strong>Language Support:</strong> While Selenium has broader language support, Playwright's TypeScript/JavaScript integration is best-in-class, with first-party support for Python, Java, and .NET.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="playwright-architecture" class="topic-section">
+          <h3 class="subsection-title">1.2 Playwright Architecture</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="2xd4hZ_xLXw">
+              <img src="https://img.youtube.com/vi/2xd4hZ_xLXw/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Playwright Architecture</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Deep dive into how Playwright communicates with browsers using the Chrome DevTools Protocol (CDP) and WebKit/Firefox equivalents.</p>
+              <a href="https://youtu.be/2xd4hZ_xLXw" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li>Uses CDP (Chrome DevTools Protocol) for Chromium</li>
+            <li>Direct browser communication — no WebDriver middleman</li>
+            <li>Browser, BrowserContext, and Page hierarchy</li>
+            <li>Isolated browser contexts for parallel testing</li>
+            <li>Built-in network interception at the protocol level</li>
+          </ul>
+        </div>
+
+        <div id="installation" class="topic-section">
+          <h3 class="subsection-title">1.3 Installation</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="LzgrW6WSzaE">
+              <img src="https://img.youtube.com/vi/LzgrW6WSzaE/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Installation</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Step-by-step installation of Playwright with Node.js. Configure your first project and run the built-in example tests.</p>
+              <a href="https://youtu.be/LzgrW6WSzaE" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li>Requires Node.js 18+</li>
+            <li>Run: <code>npm init playwright@latest</code></li>
+            <li>Installs browsers automatically</li>
+            <li>Generates playwright.config.ts</li>
+            <li>Built-in VS Code extension available</li>
+          </ul>
+          <div class="code-wrapper">
+            <button class="copy-btn">Copy</button>
+<pre><code># Run from your terminal
+npm init playwright@latest
+
+# Choose TypeScript or JavaScript
+# Select where to put your end-to-end tests
+# Add a GitHub Actions workflow? (y/N)
+# Install Playwright browsers (can be done manually via 'npx playwright install')</code></pre>
+          </div>
+        </div>
+
+        <div id="folder-structure" class="topic-section">
+          <h3 class="subsection-title">1.4 Folder Structure</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="519CWFQVBJo">
+              <img src="https://img.youtube.com/vi/519CWFQVBJo/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Folder Structure</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Understand the generated project structure and how to organize tests, fixtures, and configuration effectively.</p>
+              <a href="https://youtu.be/519CWFQVBJo" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li><code>tests/</code> — your test files (.spec.ts)</li>
+            <li><code>playwright.config.ts</code> — central configuration</li>
+            <li><code>test-results/</code> — screenshots, videos, traces</li>
+            <li><code>.github/workflows/</code> — CI/CD integration</li>
+            <li>Page Object Model for large projects</li>
+          </ul>
+          <div class="code-wrapper">
+            <button class="copy-btn">Copy</button>
+<pre><code>playwright-project/
+├── node_modules/
+├── tests/
+│   └── example.spec.ts
+├── tests-examples/
+│   └── demo-todo-app.spec.ts
+├── package.json
+├── playwright.config.ts
+└── .gitignore</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: BASICS -->
+      <section id="section-2">
+        <h2 class="section-title">2. Basics</h2>
+        
+        <div id="first-script" class="topic-section">
+          <h3 class="subsection-title">2.1 First Script</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="QOwW6IHQH-U">
+              <img src="https://img.youtube.com/vi/QOwW6IHQH-U/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>First Script - Launching Your First Browser</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Write your very first Playwright test from scratch. Understand the hierarchy of Browser, BrowserContext, and Page.</p>
+              <a href="https://youtu.be/QOwW6IHQH-U" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li><strong>Browser Fixture:</strong> Access the global browser instance.</li>
+            <li><strong>BrowserContext:</strong> Create isolated environments (like incognito windows) using <code>browser.newContext()</code>.</li>
+            <li><strong>Page Object:</strong> Open new tabs or pages within a context using <code>context.newPage()</code>.</li>
+            <li><strong>Wait Logic:</strong> Using <code>page.waitForTimeout()</code> to pause execution (useful for debugging/learning).</li>
+          </ul>
+          <div class="code-wrapper">
+            <button class="copy-btn">Copy</button>
+<pre><code>import { test } from '@playwright/test';
+
+test("Launch Browser Script", async({ browser }) => {
+
+    // Launch the Browser --> Context (Incognito) --> Page (Tab)
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    // Pause for 2 seconds to see the browser launch
+    await page.waitForTimeout(2000);
+
+});</code></pre>
+          </div>
+        </div>
+
+        <div id="browser-actions" class="topic-section">
+          <h3 class="subsection-title">2.2 Browser Actions</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="pZZBd46QvGE">
+              <img src="https://img.youtube.com/vi/pZZBd46QvGE/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Browser Actions</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Master all essential browser interactions — clicking, typing, selecting, hovering, dragging, file uploads, and keyboard shortcuts.</p>
+              <a href="https://youtu.be/pZZBd46QvGE" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li><strong>page.goto():</strong> Navigate to any URL</li>
+            <li><strong>page.title():</strong> Get the current page title</li>
+            <li><strong>page.url():</strong> Retrieve the current URL</li>
+            <li><strong>page.reload():</strong> Refresh the current page</li>
+            <li><strong>page.goBack() / .goForward():</strong> Navigate history</li>
+          </ul>
+          <div class="code-wrapper">
+            <button class="copy-btn">Copy</button>
+<pre><code>import { test,expect } from '@playwright/test';
+
+test("Launch Browser Script",async({page}) => {
+
+    await page.waitForTimeout(2000);
+
+    await page.goto("https://www.instagram.com/");
+
+    const pageTile = await page.title();
+    const currentUrl =  await page.url();
+
+    console.log(`Page Tile ${pageTile}`)
+    console.log(`Current URL ${currentUrl}`)
+
+    await page.waitForTimeout(2000);
+
+    await page.goto("https://www.facebook.com/")
+
+    await page.waitForTimeout(2000);
+
+    await page.reload();
+    await page.waitForTimeout(2000);
+
+    await page.goBack();
+    await page.waitForTimeout(2000);
+
+    await page.goForward();
+    await page.waitForTimeout(2000);
+})</code></pre>
+          </div>
+        </div>
+
+        <div id="basic-assertions" class="topic-section">
+          <h3 class="subsection-title">2.3 Basic Assertions</h3>
+          <div class="video-card">
+            <div class="video-thumbnail" data-video-id="FOc3gZzLfHU">
+              <img src="https://img.youtube.com/vi/FOc3gZzLfHU/maxresdefault.jpg" alt="Video Thumbnail">
+              <div class="play-button">▶</div>
+            </div>
+            <div class="video-info">
+              <h4>Basic Assertions</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Learn Playwright's powerful expect() API. Use auto-retrying assertions that wait for conditions to become true, making your tests stable.</p>
+              <a href="https://youtu.be/FOc3gZzLfHU" target="_blank" rel="noopener">Watch on YouTube ↗</a>
+            </div>
+          </div>
+          <ul class="takeaways">
+            <li><strong>expect(actual).toEqual(expected):</strong> Direct value comparison</li>
+            <li><strong>expect.soft():</strong> Test continues even if assertion fails</li>
+            <li><strong>Custom Failure Messages:</strong> Pass a string as the second argument to identify failures</li>
+            <li><strong>Page Metadata:</strong> Assertions on <code>page.title()</code> and <code>page.url()</code></li>
+          </ul>
+          <div class="code-wrapper">
+            <button class="copy-btn">Copy</button>
+<pre><code>import { test,expect } from '@playwright/test';
+
+test("Launch Browser Script",async({page}) => {
+
+    await page.waitForTimeout(2000);
+
+    await page.goto("https://www.instagram.com/");
+
+    const pageTile = await page.title();
+    const currentUrl =  await page.url();
+
+    //actual == expected 
+    expect.soft(pageTile,"Title is not matching").toEqual("facebook");
+
+    expect(currentUrl).toEqual("https://www.instagram.com/")
+
+    await page.waitForTimeout(2000);
+
+    await page.goto("https://www.facebook.com/")
+
+    await page.waitForTimeout(2000);
+})</code></pre>
+          </div>
+          
+          <table>
+            <tr><th>Assertion</th><th>What it checks</th><th>Auto-retries</th></tr>
+            <tr><td><code>toBeVisible()</code></td><td>Element is attached and visible</td><td>✅ Yes</td></tr>
+            <tr><td><code>toHaveText()</code></td><td>Element matches expected text</td><td>✅ Yes</td></tr>
+            <tr><td><code>toHaveValue()</code></td><td>Input has expected value</td><td>✅ Yes</td></tr>
+            <tr><td><code>toHaveCount()</code></td><td>List has expected number of items</td><td>✅ Yes</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 3: LOCATORS -->
+      <section id="section-3">
+        <h2 class="section-title">3. Locators</h2>
+        <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem;">
+          Locators are the core of Playwright's auto-waiting and retry-ability. They describe how to find an element on the page. Playwright recommends using semantic locators that mirror how users perceive the page.
+        </p>
+
+        <div class="card" style="border-left: 4px solid var(--accent); background: rgba(0, 255, 157, 0.05);">
+          <h4 style="color: var(--accent); margin-bottom: 1rem;">Priority Order</h4>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+            Role > Label > Placeholder > Text > AltText > Title > TestId > CSS/XPath
+          </div>
+        </div>
+
+        <!-- 3.1 getByRole -->
+        <div id="getByRole" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge a11y">Accessibility</span></div>
+          <h3 class="subsection-title">3.1 getByRole</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem; margin-bottom: 1.5rem;">Working on this section. Available in a short time!</p>
+          
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="getByRole-practice.html" target="_blank" class="btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">🚀 Open Practice Page</a>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Open in a new tab to write your script</span>
+          </div>
+        </div>
+
+        <!-- 3.2 getByText -->
+        <div id="getByText" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge text">Text Content</span></div>
+          <h3 class="subsection-title">3.2 getByText</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+        <!-- 3.3 getByLabel -->
+        <div id="getByLabel" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge form">Form</span></div>
+          <h3 class="subsection-title">3.3 getByLabel</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+        <!-- 3.4 getByPlaceholder -->
+        <div id="getByPlaceholder" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge form">Form</span></div>
+          <h3 class="subsection-title">3.4 getByPlaceholder</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+        <!-- 3.5 getByAltText -->
+        <div id="getByAltText" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge media">Media</span></div>
+          <h3 class="subsection-title">3.5 getByAltText</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+        <!-- 3.6 getByTitle -->
+        <div id="getByTitle" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge attr">Attribute</span></div>
+          <h3 class="subsection-title">3.6 getByTitle</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+        <!-- 3.7 getByTestId -->
+        <div id="getByTestId" class="topic-section card">
+          <div style="margin-bottom: 1rem;"><span class="badge test">Testing</span></div>
+          <h3 class="subsection-title">3.7 getByTestId</h3>
+          <p style="color: var(--accent); font-style: italic; margin-top: 1rem;">Working on this section. Available in a short time!</p>
+        </div>
+
+      </section>
+
+      <!-- REFERENCE SECTION -->
+      <section id="priority">
+        <h2 class="section-title">Reference</h2>
+        
+        <h3 class="subsection-title">Locator Priority Guide</h3>
+        <div class="priority-list">
+          <div class="priority-item"><span class="num">1</span>🏆 <strong>getByRole</strong> — Most recommended, mirrors user + a11y</div>
+          <div class="priority-item"><span class="num">2</span>🥈 <strong>getByLabel</strong> — Best for forms</div>
+          <div class="priority-item"><span class="num">3</span>🥉 <strong>getByPlaceholder</strong> — For unlabelled inputs</div>
+          <div class="priority-item"><span class="num">4</span>4️⃣ <strong>getByText</strong> — For visible content</div>
+          <div class="priority-item"><span class="num">5</span>5️⃣ <strong>getByAltText</strong> — For images</div>
+          <div class="priority-item"><span class="num">6</span>6️⃣ <strong>getByTitle</strong> — For tooltip elements</div>
+          <div class="priority-item"><span class="num">7</span>7️⃣ <strong>getByTestId</strong> — Last resort</div>
+          <div class="priority-item"><span class="num">8</span>❌ <strong>CSS/XPath</strong> — Avoid unless absolutely necessary</div>
+        </div>
+      </section>
+
+      <section id="reference">
+        <h3 class="subsection-title">Quick Reference Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Locator</th>
+              <th>HTML it targets</th>
+              <th>Best For</th>
+              <th>Avoid When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>getByRole</code></td>
+              <td>aria roles, &lt;button&gt;, &lt;a&gt;, &lt;h1&gt;</td>
+              <td>Interactive elements, a11y</td>
+              <td>Never (always prefer this)</td>
+            </tr>
+            <tr>
+              <td><code>getByLabel</code></td>
+              <td>&lt;label for=""&gt;, aria-label</td>
+              <td>Form inputs, checkboxes</td>
+              <td>Non-form elements</td>
+            </tr>
+            <tr>
+              <td><code>getByPlaceholder</code></td>
+              <td>placeholder="text"</td>
+              <td>Search bars, inline inputs</td>
+              <td>A label is available</td>
+            </tr>
+            <tr>
+              <td><code>getByText</code></td>
+              <td>visible text content</td>
+              <td>Paragraphs, static text</td>
+              <td>Text changes frequently</td>
+            </tr>
+            <tr>
+              <td><code>getByAltText</code></td>
+              <td>alt="text"</td>
+              <td>Images, SVG with alt</td>
+              <td>Decorative images</td>
+            </tr>
+            <tr>
+              <td><code>getByTitle</code></td>
+              <td>title="text"</td>
+              <td>Tooltips, icon-only buttons</td>
+              <td>aria-label is present</td>
+            </tr>
+            <tr>
+              <td><code>getByTestId</code></td>
+              <td>data-testid="id"</td>
+              <td>Dynamic UI, no semantics</td>
+              <td>Semantic HTML exists</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="resources">
+        <h3 class="subsection-title">Resources</h3>
+        <div class="grid-4" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+          <a href="https://youtube.com/@automationtestcrew?si=os4BoaGPhoROAiRN" target="_blank" rel="noopener" class="card" style="text-decoration:none; color:inherit; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;">📺</div>
+            <h4 style="color:var(--accent);">YouTube Channel</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">AutomationTestCrew</p>
+          </a>
+          <a href="https://youtube.com/playlist?list=PL4b-ZB0-nI8cxINEXQGJz0ilAiYYgJZH6&si=h4TSRlSZka0fFZwz" target="_blank" rel="noopener" class="card" style="text-decoration:none; color:inherit; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;">📋</div>
+            <h4 style="color:var(--accent);">Course Playlist</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Full Playwright series</p>
+          </a>
+          <a href="https://playwright.dev/docs" target="_blank" rel="noopener" class="card" style="text-decoration:none; color:inherit; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;">📖</div>
+            <h4 style="color:var(--accent);">Official Docs</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">playwright.dev</p>
+          </a>
+          <a href="https://github.com/microsoft/playwright" target="_blank" rel="noopener" class="card" style="text-decoration:none; color:inherit; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;">🐙</div>
+            <h4 style="color:var(--accent);">GitHub Repo</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">microsoft/playwright</p>
+          </a>
+        </div>
+      </section>
+
+      <footer>
+        <p>Built for learning Playwright | <a href="https://youtube.com/@automationtestcrew" target="_blank" rel="noopener">AutomationTestCrew</a> | <a href="https://youtube.com/playlist?list=PL4b-ZB0-nI8cxINEXQGJz0ilAiYYgJZH6" target="_blank" rel="noopener">View Playlist</a></p>
+      </footer>
+
+    </div>
+  </main>
+
+  <script>
+    // --- Mobile Menu Toggle ---
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+    // Close sidebar on link click (mobile)
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if(window.innerWidth <= 768) sidebar.classList.remove('open');
+      });
+    });
+
+    // --- Video Click behavior (Open in new tab) ---
+    document.querySelectorAll('.video-thumbnail').forEach(thumbnail => {
+      thumbnail.addEventListener('click', function() {
+        const videoId = this.getAttribute('data-video-id');
+        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+      });
+    });
+
+    // --- Copy to Clipboard ---
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const code = btn.nextElementSibling.innerText;
+        try {
+          await navigator.clipboard.writeText(code);
+          const original = btn.innerText;
+          btn.innerText = 'Copied! ✓';
+          btn.style.color = 'var(--accent)';
+          setTimeout(() => {
+            btn.innerText = original;
+            btn.style.color = 'var(--text-muted)';
+          }, 2000);
+        } catch(err) {
+          console.error('Failed to copy', err);
+        }
+      });
+    });
+
+    // --- Intersection Observer (Animations, Active Nav, Progress) ---
+    const sections = document.querySelectorAll('section, .topic-section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const progressCount = document.getElementById('progress-count');
+    const progressFill = document.getElementById('progress-fill');
+    
+    // Load progress from localStorage
+    let viewedTopics = new Set(JSON.parse(localStorage.getItem('playwrightProgress') || '[]'));
+    const totalTopics = 14;
+
+    function updateProgress() {
+      const count = viewedTopics.size;
+      progressCount.innerText = `${count} / ${totalTopics} topics`;
+      progressFill.style.width = `${(count / totalTopics) * 100}%`;
+      localStorage.setItem('playwrightProgress', JSON.stringify(Array.from(viewedTopics)));
+    }
+    updateProgress(); // init on load
+
+    const observerOptions = { root: null, rootMargin: '-10% 0px -70% 0px', threshold: 0 };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          // Add visible class for animation
+          entry.target.classList.add('visible');
+          
+          const id = entry.target.getAttribute('id');
+          if (!id) return;
+
+          // Track progress
+          const topicIds = ['selenium-vs-playwright', 'playwright-architecture', 'installation', 'folder-structure', 'first-script', 'browser-actions', 'basic-assertions', 'getByRole', 'getByText', 'getByLabel', 'getByPlaceholder', 'getByAltText', 'getByTitle', 'getByTestId'];
+          if(topicIds.includes(id)) {
+            viewedTopics.add(id);
+            updateProgress();
+          }
+
+          // Highlight Nav & Sync Sidebar
+          navLinks.forEach(link => {
+            const isActive = link.getAttribute('href') === `#${id}`;
+            link.classList.toggle('active', isActive);
+            if (isActive) {
+              const details = link.closest('details');
+              if(details) details.setAttribute('open', '');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(sec => observer.observe(sec));
+
+    // --- Typing Effect ---
+    const typingElement = document.getElementById('typing-text');
+    const phrases = ["page.getByRole()", "page.getByText()", "expect(locator).toBeVisible()", "await page.click()"];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function type() {
+      const currentPhrase = phrases[phraseIndex];
+      if (isDeleting) {
+        typingElement.textContent = currentPhrase.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        typingElement.textContent = currentPhrase.substring(0, charIndex + 1);
+        charIndex++;
+      }
+
+      let typeSpeed = isDeleting ? 30 : 100;
+
+      if (!isDeleting && charIndex === currentPhrase.length) {
+        isDeleting = true;
+        typeSpeed = 1500; // Pause at end of phrase
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        typeSpeed = 500; // Pause before next phrase
+      }
+
+      setTimeout(type, typeSpeed);
+    }
+    setTimeout(type, 1000);
+
+    // --- Live Demo Logic ---
+    function resetHighlights() {
+      document.querySelectorAll('.demo-el').forEach(el => {
+        el.classList.remove('highlighted');
+        const tooltip = el.querySelector('.demo-tooltip');
+        if(tooltip) tooltip.remove();
+      });
+    }
+
+    function addTooltip(el, text) {
+      const tt = document.createElement('div');
+      tt.className = 'demo-tooltip';
+      tt.innerText = text;
+      el.appendChild(tt);
+    }
+
+    window.highlightDemo = function(type, val) {
+      resetHighlights();
+      const el = document.querySelector(`[data-${type}="${val}"]`);
+      if(el) {
+        el.classList.add('highlighted');
+        addTooltip(el, '✓ Located!');
+      }
+    }
+
+    window.simulateTestId = function() {
+      resetHighlights();
+      const btn = document.querySelector(`[data-testid="add-to-cart"]`);
+      const countEl = document.getElementById('cart-counter');
+      if(btn) {
+        btn.classList.add('highlighted');
+        addTooltip(btn, 'data-testid="add-to-cart"');
+        
+        // Simulate click
+        setTimeout(() => {
+          let c = parseInt(countEl.innerText);
+          countEl.innerText = c + 1;
+          countEl.classList.add('highlighted');
+          addTooltip(countEl, '✓ Updated');
+        }, 400);
+      }
+    }
+  </script>
+</body>
+</html>
