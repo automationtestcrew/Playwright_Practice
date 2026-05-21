@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practice: getByLabel | Playwright Mastery</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-deep: #080a0f;
+      --bg-card: #11141d;
+      --bg-input: #0d0f17;
+      --accent: #00ff9d;
+      --accent-soft: rgba(0, 255, 157, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #8b949e;
+      --border: #21262d;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-deep);
+      background-image: radial-gradient(circle at 50% 50%, #161b22 0%, #080a0f 100%);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .practice-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 440px;
+      padding: 3rem 2.5rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .practice-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .header {
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    /* Checkbox Style */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .checkbox-container:hover {
+      color: var(--text-main);
+    }
+
+    input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-input);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: "✓";
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--bg-deep);
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    /* Button Style */
+    .btn-submit {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--accent-soft);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer Links */
+    .footer-actions {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .btn-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Dashboard Specific Styles */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .data-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+
+    .data-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: block; }
+    .data-value { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #fff; }
+
+  </style>
+</head>
+<body>
+
+  <div class="practice-card">
+    
+    <div id="login-view">
+      <header class="header">
+        <h1>getByLabel Practice</h1>
+        <p class="subtitle">Enter credentials to proceed</p>
+      </header>
+
+      <div class="form-group">
+        <label for="email-field">Email Address</label>
+        <input type="text" role="textbox" id="email-field" placeholder="e.g. alex@example.com" autocomplete="off">
+        <p id="error-message" role="alert" style="color: #ff4d4d; font-size: 0.75rem; margin-top: 8px; display: none; font-weight: 600;">⚠️ Email address is required to proceed</p>
+      </div>
+
+      <div class="form-group">
+        <label>Password
+          <input type="password" id="password-field" placeholder="Enter your password" style="margin-top: 0.5rem;">
+        </label>
+      </div>
+
+      <label class="checkbox-container">
+        <input type="checkbox" id="persist-session">
+        Keep me logged in
+      </label>
+
+      <button type="button" class="btn-submit" onclick="navigate('dashboard')">
+        CONTINUE
+      </button>
+
+      <footer class="footer-actions">
+        <a class="btn-link" onclick="navigate('signup')">Create a new account</a>
+      </footer>
+    </div>
+
+    <!-- VIEW 2: LOADING (Hidden) -->
+    <div id="loading-view" style="display: none; text-align: center;">
+      <div class="spinner"></div>
+      <p id="loading-text" style="margin-top: 1.5rem; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">Processing Request...</p>
+    </div>
+
+    <!-- VIEW 3: DASHBOARD (Hidden) -->
+    <div id="dashboard-view" style="display: none; text-align: center;">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Secure Session Active
+      </div>
+      
+      <header class="header" style="margin-bottom: 1.5rem;">
+        <h1>Welcome Back!</h1>
+        <p class="subtitle">Access granted to the practice dashboard.</p>
+      </header>
+      
+      <div class="data-box">
+        <span class="data-label">Internal Session ID</span>
+        <div class="data-value">AUTH_TOKEN_77291_X</div>
+      </div>
+
+      <button class="btn-submit" style="background: transparent; border: 1px solid var(--border); color: white;" onclick="location.reload()">
+        LOGOUT
+      </button>
+    </div>
+
+    <!-- VIEW 4: SIGNUP SUCCESS (Hidden) -->
+    <div id="signup-view" style="display: none; text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+      <header class="header">
+        <h1>Account Created!</h1>
+        <p class="subtitle">Your registration was successful.</p>
+      </header>
+
+      <button class="btn-submit" onclick="location.reload()">
+        RETURN TO LOGIN
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    function navigate(view) {
+      const emailField = document.getElementById('email-field');
+      const errorMsg = document.getElementById('error-message');
+      
+      // Validation Logic for Login
+      if (view === 'dashboard') {
+        if (emailField.value.trim() === '') {
+          errorMsg.style.display = 'block';
+          emailField.style.borderColor = '#ff4d4d';
+          return; // Stop execution
+        }
+      }
+
+      // Reset Error State
+      errorMsg.style.display = 'none';
+      emailField.style.borderColor = 'var(--border)';
+
+      const loginView = document.getElementById('login-view');
+      const loadingView = document.getElementById('loading-view');
+      const targetView = document.getElementById(view + '-view');
+      const loadingText = document.getElementById('loading-text');
+
+      // Update loading text based on action
+      loadingText.innerText = view === 'dashboard' ? 'Authenticating...' : 'Creating Account...';
+
+      // Switch to Loading
+      loginView.style.display = 'none';
+      loadingView.style.display = 'block';
+
+      // Simulate Network Delay (1.5 seconds)
+      setTimeout(() => {
+        loadingView.style.display = 'none';
+        targetView.style.display = 'block';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
